@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EARTH BEAT</title>
+<meta name="description" content="Hear pictures of the Earth: lightning, night lights and ocean temperature, played as music you can turn by hand.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#000;--fg:#fff;--dim:#777;--y:#ffd60a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#000;--fg:#fff}}
+:root[data-theme="dark"]{--bg:#000;--fg:#fff}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*{box-sizing:border-box}
+body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:600 14px/1.4 Barlow,"Arial Narrow",system-ui,sans-serif;overflow:hidden}
+canvas#g{position:fixed;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
+button{font:inherit;letter-spacing:.08em;text-transform:uppercase;color:var(--fg);background:rgba(0,0,0,.6);border:1px solid #aaa;padding:16px 20px;cursor:pointer}
+button:hover{background:#222}
+button:focus-visible,canvas:focus-visible,input:focus-visible{outline:3px solid var(--y);outline-offset:2px}
+.top{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 12px) 12px 0;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
+.top>*{pointer-events:auto}
+.left{padding-top:14px}
+.brand{display:flex;align-items:center;gap:4px}
+.ttl{margin:0;font:400 46px/1 "Bebas Neue",Impact,"Arial Narrow",sans-serif;letter-spacing:.05em;white-space:nowrap}
+.ttl span{color:var(--y)}
+#beat{display:block;width:84px;height:84px;margin:0 0 0 -8px;pointer-events:none}
+#menu{border:0;padding:0;background:none;font-size:14px;color:#ccc}
+.tabs{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;max-width:60vw}
+.tabs button{border:0;background:none;padding:0 0 4px;font:400 32px/1 "Bebas Neue",Impact,"Arial Narrow",sans-serif;color:var(--dim);border-bottom:2px solid transparent;letter-spacing:0}
+.tabs button[aria-selected="true"]{color:var(--fg);border-color:var(--y)}
+.btns{display:flex;gap:10px}
+#note{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 80px);color:var(--y)}
+.src{position:fixed;left:12px;bottom:130px;width:min(550px,40vw)}
+.src small{display:block;color:#ccc;letter-spacing:.08em;margin-bottom:6px;font-size:13px}
+#mini{width:100%;display:block;border:1px solid #888}
+.time{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);display:flex;justify-content:center;align-items:center;gap:clamp(24px,8vw,120px)}
+#yr{font:400 38px/1 "Bebas Neue",Impact,sans-serif}
+input[type=range]{-webkit-appearance:none;appearance:none;width:min(780px,45vw);background:none;height:30px}
+input[type=range]::-webkit-slider-runnable-track{height:1px;background:#888}
+input[type=range]::-moz-range-track{height:1px;background:#888}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:5px;height:28px;background:var(--y);margin-top:-14px;border:0;border-radius:0;box-shadow:0 0 8px var(--y)}
+input[type=range]::-moz-range-thumb{width:5px;height:28px;background:var(--y);border:0;border-radius:0}
+dialog{background:#000;color:var(--fg);border:1px solid #aaa;max-width:520px;padding:24px}
+dialog::backdrop{background:rgba(0,0,0,.8)}
+#panel{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 112px);width:220px;padding:12px;border:1px solid #888;background:rgba(0,0,0,.6);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+#panel h2{font:400 28px/1 "Bebas Neue",Impact,sans-serif;margin:0 0 2px;letter-spacing:0}
+#panel p{margin:0 0 8px;color:#bbb;text-transform:none;letter-spacing:0;font-size:12px}
+.pr{display:grid;grid-template-columns:30px 1fr;gap:6px;align-items:center;margin:3px 0}
+.pr i{display:flex;height:6px;background:#1a1a1a}
+.pr b{display:block;height:100%}
+.pr u{display:block;height:100%;background:#ff8020;text-decoration:none}
+.sr{position:absolute;left:-9999px}
+@media (max-width:760px){#beat{width:64px;height:64px}.ttl{font-size:32px}.tabs button{font-size:22px}.tabs{gap:4px 12px;max-width:100vw}button{padding:12px 12px}.src{display:none}#panel{display:none}.btns{flex-wrap:wrap;justify-content:flex-end;max-width:50vw}input[type=range]{width:50vw}#yr{font-size:28px}}
+dialog{max-height:85vh;overflow:auto}dialog p{margin:0 0 12px}dialog h3{font:400 24px/1 "Bebas Neue",Impact,sans-serif;letter-spacing:.04em;margin:16px 0 6px;color:var(--y)}dialog ul{margin:0 0 12px;padding-left:18px}dialog li{margin:6px 0}
+</style>
+</head>
+<body>
+<canvas id="g" tabindex="0" aria-label="Night globe. Drag, or use the arrow keys, to turn the Earth."></canvas>
+<div class="top">
+ <div class="left">
+  <div class="brand"><canvas id="beat" width="84" height="84" aria-hidden="true"></canvas><h1 class="ttl">EARTH <span>Beat</span></h1></div>
+  <div class="tabs" role="tablist" aria-label="Choose a picture of the Earth">
+   <button role="tab" aria-selected="false" data-t="0">Lightning</button>
+   <button role="tab" aria-selected="true" data-t="1">Night Lights</button>
+   <button role="tab" aria-selected="false" data-t="2">Ocean</button>
+   <button role="tab" aria-selected="false" data-t="3">Currents</button>
+   <button role="tab" aria-selected="false" data-t="4">Aerosols</button>
+   <button role="tab" aria-selected="false" data-t="5">CO₂</button>
+   <button role="tab" aria-selected="false" data-t="6">Forests</button>
+   <button role="tab" aria-selected="false" data-t="7">Moisture</button>
+   <button role="tab" aria-selected="false" data-t="8">Warming</button>
+  </div></div>
+ <div class="btns"><button id="play" aria-pressed="false">Play</button><button id="exp">Export Audio</button><button id="info">Info</button></div>
+</div>
+<div id="note" role="status"></div>
+<div class="src"><small>STYLED AFTER NASA SVS 5313</small><canvas id="mini" width="550" height="155" aria-hidden="true"></canvas></div>
+<div class="time"><span id="yr">2023</span><input id="yrIn" type="range" min="2012" max="2023" step="1" value="2023" aria-label="Year"></div>
+<div id="live" class="sr" aria-live="polite"></div>
+<dialog id="dlg" aria-label="About Earth Beat"><p>Hear pictures of the Earth. Each layer is played as music you can turn by hand. Made for blind and low-vision listeners, and for everyone else.</p><h3>How to use it</h3><ul><li>Drag the globe, or use the arrow keys, to turn it.</li><li>Each yellow ring is a latitude band. The part of the band facing you sets the note.</li><li>Press Play to start the music. The year control works on Night Lights and CO₂.</li></ul><h3>The layers</h3><ul><li><b>Lightning</b>: ISS Lightning Imaging Sensor, 2017–2023 (SVS 5011). It sees only the tropics and mid-latitudes, up to about 38° north and south. Sounds as clicks.</li><li><b>Night Lights</b>: NASA Black Marble, 2012–2023 (SVS 5313). Purple lights grew, white are unchanged, orange faded. Growth rings out as rising bright notes, fading as falling low notes.</li><li><b>Ocean</b>: sea surface temperature from the ECCO2 model (SVS 3912). Warmer water sounds stronger.</li><li><b>Currents</b>: Gulf Stream, Kuroshio, Agulhas and other western boundary currents (SVS 3912, 5425). Sounds as glides.</li><li><b>Aerosols</b>: GEOS model for 19 August 2025 (SVS 5669). Sea salt is blue, dust magenta, smoke orange and sulfate green. A dark drone.</li><li><b>CO₂</b>: GEOS model for January to March 2020 (SVS 5196). The level follows NOAA’s global yearly mean, 394 ppm in 2012 to 421 ppm in 2023, and the low pulse rises in pitch and strength with it.</li><li><b>Forests</b>: GEDI canopy height, 2019–2020 (SVS 4950). GEDI sees only between 51.6° north and south. Short high plucks.</li><li><b>Moisture</b>: an atmospheric river reaching the US west coast (SVS 4960). Sounds as glides.</li><li><b>Warming</b>: NASA GISS GISTEMP, the global land-ocean temperature anomaly, one note for every year from 1880 to 2015. Cooler years sound lower and warmer years higher, with a slow bass line following the five-year average. Press Play to hear 135 years in about 40 seconds.</li></ul><p>Only Night Lights and CO₂ use the year control. Warming steps through its own years. The other layers are single snapshots, so they stay the same whatever the year.</p><p>Warming plays NASA GISS’s published yearly temperature numbers. The other layers are re-creations with simplified, synthetic data placed by hand, not NASA imagery or measurements.</p><p>Made for the NASA Space Apps Challenge 2026. NASA does not endorse this project.</p><button id="close">Close</button></dialog>
+<script>
+(function(){
+var D=Math.PI/180;
+var LAND=[
+[[-168,66],[-156,71],[-125,70],[-95,72],[-80,68],[-62,58],[-56,50],[-67,45],[-76,38],[-81,31],[-80,25],[-84,30],[-90,29],[-97,26],[-98,19],[-92,18],[-87,21],[-83,15],[-78,8],[-80,8],[-86,11],[-92,14],[-105,20],[-110,24],[-115,30],[-118,34],[-124,41],[-124,48],[-135,58],[-150,60],[-165,55],[-158,58]],
+[[-78,8],[-72,12],[-62,10],[-50,0],[-35,-6],[-40,-22],[-48,-26],[-58,-38],[-65,-42],[-68,-52],[-74,-50],[-72,-35],[-71,-18],[-81,-5]],
+[[-10,36],[-9,43],[-2,48],[5,53],[10,57],[18,60],[28,70],[60,69],[100,77],[140,72],[180,68],[170,60],[160,55],[142,52],[135,44],[128,39],[122,40],[121,31],[110,20],[106,10],[100,13],[103,1],[98,8],[92,22],[80,15],[77,8],[72,20],[67,25],[57,25],[50,30],[56,18],[44,12],[35,28],[35,33],[27,37],[22,37],[12,44],[8,44],[0,38]],
+[[-17,21],[-10,30],[10,37],[32,31],[43,12],[51,12],[40,-3],[40,-15],[33,-26],[20,-35],[14,-22],[12,-5],[9,4],[-8,4],[-17,14]],
+[[114,-22],[122,-18],[136,-12],[142,-11],[146,-19],[153,-27],[150,-37],[140,-38],[130,-32],[115,-34]],
+[[-55,60],[-45,60],[-22,70],[-20,82],[-60,82],[-70,77]],
+[[130,31],[140,35],[142,40],[141,45],[138,38]],
+[[109,1.5],[109.5,-1],[110,-3],[114,-4],[116,-3.5],[116.5,-1],[117.5,1],[119,5],[117,7],[115,5],[113,3],[111,2]],
+[[95,5.5],[98,4],[104,-1],[106,-5.5],[104,-5.5],[101,-3],[98,0],[95.5,3]],
+[[105.5,-6],[114,-7.5],[114.5,-8.5],[106,-7.5]],
+[[131,-1],[138,-1.5],[145,-4],[150,-10],[142,-9],[138,-8],[134,-3.5]],
+[[49,-12],[50.5,-15.5],[47,-25],[44,-24.5],[43.5,-17],[44.5,-16]],
+[[-5.5,50],[1.5,51],[1.5,53],[-2,57.5],[-5,58.5],[-6,56],[-3.5,54.5],[-4.5,52]],
+[[-10,52],[-6,52],[-6,55],[-8,55]],
+[[173,-35],[178,-38],[175,-41.5],[174,-39]],
+[[172.5,-40.5],[174,-41.5],[171,-44.5],[167,-46.5],[166.5,-45.5]],
+[[80,9.5],[82,7.5],[81,6],[79.8,7]],
+[[-24,65],[-14,66],[-14,64.3],[-22,63.4]]];
+function pip(x,y){for(var k=0;k<LAND.length;k++){var p=LAND[k],c=false;for(var i=0,j=p.length-1;i<p.length;j=i++){if((p[i][1]>y)!=(p[j][1]>y)&&x<(p[j][0]-p[i][0])*(y-p[i][1])/(p[j][1]-p[i][1])+p[i][0])c=!c}if(c)return true}return false}
+var seed=7;function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647}
+function gs(){return (rnd()+rnd()+rnd()-1.5)*2}
+var SET=[[],[],[],[],[],[],[],[],[]];
+/* Lightning: ISS LIS, 2017-2023. LIS only sees the tropics and mid-latitudes (about 38 deg N/S), so nothing is placed beyond that. Hotspots: Congo basin, Lake Maracaibo, Himalayan foothills, Maritime Continent, Amazon, Florida, Argentina, N Australia, Mexico, Gulf coast, Pakistan, Sahel, South African highveld */
+[[25,-2,1],[-71,9,1],[90,25,.9],[115,0,.8],[-62,-5,.6],[-82,28,.7],[-60,-30,.7],[132,-14,.6],[-100,22,.5],[-90,32,.5],[72,31,.4],[0,10,.5],[28,-26,.5]].forEach(function(c){for(var i=0;i<70;i++){var lo=c[0]+gs()*7,la=c[1]+gs()*5;if(Math.abs(la)>38)continue;SET[0].push([lo,la,(.3+rnd()*.7)*c[2],rnd()])}});
+[[-74,41,1],[-88,42,.8],[-118,34,.9],[-99,19,.8],[-46,-23,.9],[0,51,.8],[2,49,.8],[31,30,.7],[3,6,.6],[77,28,.9],[73,19,.9],[116,40,1],[121,31,1],[139,36,1],[127,37,.9],[107,-6,.8],[37,56,.7],[151,-34,.6],[28,-26,.6],[29,41,.7],[104,30,.8],[113,23,.9],[90,23,.7],[-80,26,.6],[-122,37,.7]].forEach(function(c){for(var i=0;i<50;i++){var lo=c[0]+gs()*2.5,la=c[1]+gs()*2;SET[1].push([lo,la,c[2]*(.4+rnd()*.6),rnd(),chg(lo,la)])}});
+function chg(lo,la){var c=0;if(lo>65&&lo<125&&la>5&&la<42)c=.9;else if(lo>-20&&lo<52&&la>-35&&la<15)c=.8;else if(lo>34&&lo<60&&la>15&&la<35)c=.4;else if(lo>-85&&lo<-35&&la<12)c=.4;
+if(lo>-125&&lo<-115&&la>32&&la<48)c=.2;if(lo>-84&&lo<-70&&la>30&&la<45)c=-.2;if(lo>-10&&lo<15&&la>41&&la<56)c=-.22;
+if(lo>-73&&lo<-60&&la>1&&la<12)c=-.5;if(lo>24&&lo<40&&la>44&&la<52)c=-.7;if(lo>36&&lo<42&&la>32&&la<37)c=-.7;if(lo>42&&lo<48&&la>12&&la<17)c=-.6;
+return Math.max(-1,Math.min(1,c+(rnd()-.5)*.3))}
+[[-10,40,36,58,320],[-90,-70,32,45,160],[70,88,10,30,160],[104,122,23,40,200],[130,141,32,42,80],[-5,10,4,10,50],[28,50,26,38,80]].forEach(function(b){for(var i=0;i<b[4];i++){var lo=b[0]+rnd()*(b[1]-b[0]),la=b[2]+rnd()*(b[3]-b[2]);if(!pip(lo,la))continue;SET[1].push([lo,la,.06+.3*rnd()*rnd(),rnd(),chg(lo,la)])}});
+for(var ni=0;ni<130;ni++){var nf=rnd(),sg=[[31.2,30.2],[31.2,27],[32,25.5],[32.7,24],[32.9,22]],nk=Math.min(3,(nf*4)|0),nr=nf*4-nk;SET[1].push([sg[nk][0]+(sg[nk+1][0]-sg[nk][0])*nr+gs()*.15,sg[nk][1]+(sg[nk+1][1]-sg[nk][1])*nr,.5+.5*rnd(),rnd(),.4])}
+/* Ocean: annual-mean sea surface temperature (SVS 3912 colours currents by SST, 0-32 C): cos(lat)^1.6 plus warm pool, cold tongue, upwelling and warm boundary currents */
+function sst(lo,la){var v=Math.pow(Math.cos(la*D),1.6);if(lo>100&&lo<175&&Math.abs(la)<12)v+=.06;if(lo>-150&&lo<-85&&Math.abs(la)<6)v-=.1;if(lo>-85&&lo<-70&&la<-5&&la>-35)v-=.12;if(lo>0&&lo<15&&la<-15&&la>-35)v-=.1;if(lo>-82&&lo<-55&&la>25&&la<42)v+=.08;if(lo>125&&lo<145&&la>22&&la<36)v+=.06;return v}
+for(var la=-65;la<=65;la+=5)for(var lo=-180;lo<180;lo+=5)if(!pip(lo,la))SET[2].push([lo,la,Math.max(.05,Math.min(1,sst(lo,la)+(rnd()-.5)*.06)),0]);
+function blob(t,list,n,sx,sy){list.forEach(function(c){for(var i=0;i<n;i++)SET[t].push([c[0]+gs()*sx,c[1]+gs()*sy,(c[2]||1)*(.3+rnd()*.7),rnd()])})}
+function path(t,pts,n,j){for(var k=0;k<pts.length-1;k++)for(var i=0;i<n;i++){var f=i/n;SET[t].push([pts[k][0]+(pts[k+1][0]-pts[k][0])*f+gs()*j,pts[k][1]+(pts[k+1][1]-pts[k][1])*f+gs()*j,.4+rnd()*.6,rnd()])}}
+/* Currents: western boundary currents named in SVS 5425 (Gulf Stream, Kuroshio, Agulhas) plus the Brazil and East Australian currents on the western edges of their basins */
+path(3,[[-80,26],[-79,30],[-75.5,35],[-70,38],[-60,40],[-50,43],[-40,47]],14,1);path(3,[[123,22],[128,27],[131,31],[137,33.5],[141,35.5],[150,36],[160,36]],14,1);path(3,[[34,-24],[32.5,-28],[30,-31.5],[26,-34],[21,-36.5],[19,-38.5]],14,1);path(3,[[-37,-12],[-38,-18],[-41,-23],[-46,-28],[-50,-33],[-53.5,-37]],14,1);path(3,[[150,-18],[153,-25],[154,-30],[154.5,-33],[157,-37],[160,-40]],14,1);
+/* Aerosols: dust, smoke, fire and pollution sources */
+function aer(list,n){list.forEach(function(c){for(var i=0;i<n;i++)SET[4].push([c[0]+gs()*c[4],c[1]+gs()*c[5],c[2]*(.3+rnd()*.7),rnd(),0,c[3]])})}
+/* types: 0 sea salt, 1 dust, 2 smoke, 3 sulfate. Named in the 19 Aug 2025 GEOS still: Saharan dust over the Atlantic, Hurricane Erin sea salt, Kilauea and Etna sulfate, southern Africa burning, Spain fires; lighter weights for typical August sources */
+aer([[10,20,1,1,8,5],[-30,16,.8,1,10,3],[-65,17,.5,1,6,3],[-66,22,.8,0,5,3],[-120,-52,.5,0,25,4],[0,-52,.5,0,25,4],[120,-52,.5,0,25,4],[-40,52,.4,0,20,4],[170,50,.4,0,20,4],[20,-13,.9,2,8,5],[5,-12,.6,2,8,4],[-6,40,.7,2,3,2],[-55,-10,.5,2,8,5],[-120,55,.4,2,8,4],[100,60,.4,2,8,4],[-157,19.5,.6,3,5,1],[15,37.7,.7,3,6,1.5],[22,37,.4,3,5,1],[115,32,.6,3,6,4],[80,25,.6,3,6,4]],45);
+/* CO2 (SVS 5196, Jan-Mar 2020): power plants, industry and traffic over China, the US and South Asia (densest over Beijing and New York), fires over Africa and South America, plus a hemispheric background */
+blob(5,[[116,36,1],[78,24,.9],[10,50,.6],[-80,39,.9],[135,36,.4],[-74,41,.8],[116.4,40,.9],[15,8,.6],[28,4,.5],[-67,6,.5],[-62,-9,.4]],50,6,4);for(var la2=-60;la2<=70;la2+=6)for(var lo2=-180;lo2<180;lo2+=8)SET[5].push([lo2,la2,la2>0?.3:.12,0]);
+/* Forests (GEDI RH100, 2019-2020): GEDI sees only 51.6 deg N/S, so no boreal forest. Tallest in the Pacific Northwest, SE Australia, Borneo */
+blob(6,[[-62,-4,.75],[-52,-3,.7],[22,0,.75],[12,-1,.75],[114,1.5,.9],[102,-1,.7],[140,-5,.7],[-123,45,1],[-80,37,.4],[-72,-38,.6],[147,-36.5,.8],[15,48,.3]],70,7,5);SET[6]=SET[6].filter(function(d){return pip(d[0],d[1])&&Math.abs(d[1])<=51.6});
+/* Moisture: atmospheric river tracks */
+path(7,[[-160,20],[-150,28],[-140,35],[-130,40],[-123,40]],18,1.5);path(7,[[-60,30],[-40,40],[-20,48],[-5,52]],18,1.5);path(7,[[150,-25],[160,-35],[175,-42]],18,1.5);
+var C=["255,214,10","255,214,10","255,214,10","110,200,255","255,150,60","255,90,90","120,230,120","170,170,255","255,140,60"],AEC=["90,160,255","255,110,200","255,150,60","110,220,120"],K=[.5,.5,.2,.4,.3,.25,.25,.4,0];
+/* timbre per tab: wave, octave, length (s), glide */
+var VO=[null,["triangle",1,.6,1],["sine",1,1,1],["sine",.5,1.2,1.5],["sawtooth",.5,1.6,.8],["square",.25,1.4,1],["sine",2,.25,1],["sine",1,1.2,.5]];
+/* only Night Lights has a 2012-2023 record; the other layers are single snapshots, so they carry no change value */
+[0,2,3,4,5,6,7].forEach(function(t){SET[t].forEach(function(d){d[4]=0})});
+var RINGS=[-46,-34,-18,0,12,24,36,50,62,70,78],PENT=[0,2,4,7,9,12,14,16,19,21,24];
+var tab=1,rot=20,tilt=28,year=2023,playing=false,AC,master;
+var cv=document.getElementById("g"),g=cv.getContext("2d"),mini=document.getElementById("mini"),m=mini.getContext("2d");
+var W,H,dpr,stars=[];for(var s=0;s<180;s++)stars.push([rnd(),rnd(),rnd()]);
+function size(){dpr=window.devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr}
+size();addEventListener("resize",size);
+var PPM=[394.06,396.74,398.81,401.01,404.41,406.76,408.72,411.65,414.21,416.41,418.53,421.08];
+function ppm(){return PPM[Math.max(0,Math.min(11,Math.floor(year)-2012))]}
+function lvl(){return (ppm()-PPM[0])/(PPM[11]-PPM[0])}
+function col(d){return tab==4?AEC[d[5]|0]:C[tab]}
+function wy(d){return Math.max(0,d[2]*(1+1.2*(d[4]||0)*(year-2012)/11)*(tab==5?1+.6*lvl():1))}
+function vis(d){return wy(d)>.02}
+function proj(lo,la){var l=(lo-rot)*D,p=la*D,t=tilt*D,x=Math.cos(p)*Math.sin(l),y0=Math.sin(p),z0=Math.cos(p)*Math.cos(l);return [x,y0*Math.cos(t)-z0*Math.sin(t),z0*Math.cos(t)+y0*Math.sin(t)]}
+function val(lat){var sum=0,S=SET[tab];for(var i=0;i<S.length;i++){var d=S[i];if(!vis(d))continue;var dl=Math.abs(((d[0]-rot+540)%360)-180);if(dl<14&&Math.abs(d[1]-lat)<5)sum+=d[2]}return Math.min(1,sum*K[tab])}
+function frame(now){
+ var dt=Math.min(.05,(now-(frame.t||now))/1000);frame.t=now;if(playing&&!drag)rot=((rot+dt*14+180)%360)-180;if(playing&&(tab==1||tab==5)){year+=dt*.5;if(year>=2024)year=2012;var yi=Math.floor(year);if(yi!=frame.y){frame.y=yi;document.getElementById('yr').textContent=yi;document.getElementById('yrIn').value=yi}}
+ g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
+ for(var i=0;i<stars.length;i++){g.fillStyle="rgba(255,255,255,"+(.2+stars[i][2]*.5)+")";g.fillRect(stars[i][0]*W,stars[i][1]*H,1,1)}
+ var R0=Math.min(H*.37,W*.42);frame.z=(frame.z||1)+((tab==1?1.9:1)-(frame.z||1))*.08;var R=R0*frame.z,cx=W*.5,cy=H*.5-10+(frame.z-1)*R0*.7;
+ function P(a){var p=proj(a[0],a[1]);return [cx+R*p[0],cy-R*p[1],p[2]]}
+ drawGlobe(cx,cy,R);g.save();g.lineWidth=1;g.strokeStyle='rgba(190,215,255,.5)';g.beginPath();g.arc(cx,cy,R,0,7);g.stroke();g.restore();
+ g.strokeStyle="rgba(200,215,255,.85)";g.lineWidth=1;
+
+ var S=SET[tab],sz=Math.max(2,R/110);g.globalCompositeOperation=tab==1?'lighter':'source-over';
+ for(var i=0;i<S.length;i++){var d=S[i];if(!vis(d))continue;var q=P(d);if(q[2]<.03)continue;
+  var wv=wy(d);g.fillStyle="rgba("+(d[4]<-.25?'255,128,32':col(d))+","+(.15+.6*Math.min(1,wv))+")";if(tab==1){if(d[4]>-.25&&d[4]<=.5)continue;var w=wy(d),s2=sz*(.5+2*w)*(.4+.6*q[2]);g.globalAlpha=Math.min(1,.25+w*1.1)*q[2];g.drawImage(d[4]<-.25?SR:(d[4]>.5?SW:SO),q[0]-s2,q[1]-s2,2*s2,2*s2);g.globalAlpha=1}else{var z=sz*(.6+Math.min(1.5,wv));g.fillRect(q[0]-z/2,q[1]-z/2,z,z)}}
+ g.globalCompositeOperation='source-over';g.save();g.strokeStyle="rgba(255,214,10,.9)";g.lineWidth=1.5;g.shadowColor="#ffd60a";g.shadowBlur=8;
+ g.restore();
+ m.clearRect(0,0,550,155);m.fillStyle="#0b0b10";m.fillRect(0,0,550,155);m.fillStyle='rgba(255,255,255,.13)';LAND.forEach(function(pl){m.beginPath();pl.forEach(function(q,k){var X=(q[0]+180)/360*550,Y=(90-q[1])/180*155;k?m.lineTo(X,Y):m.moveTo(X,Y)});m.closePath();m.fill()});
+ for(var i=0;i<S.length;i++){var d=S[i];if(!vis(d))continue;var ww=wy(d);m.fillStyle='rgba('+(tab==1?(d[4]<-.25?'255,128,32':d[4]>.5?'176,112,255':'255,244,225'):col(d))+','+(.25+.5*Math.min(1,ww))+')';m.fillRect((d[0]+180)/360*550,(90-d[1])/180*155,2,2)}
+ m.font='700 22px "Bebas Neue",Impact,sans-serif';m.textAlign='center';m.fillStyle='rgba(255,255,255,.92)';m.fillText(tab==1||tab==5?String(Math.floor(year)):PER[tab],275,86);if(tab==5){m.font='700 15px Barlow,sans-serif';m.fillText(ppm().toFixed(1)+' ppm, global mean',275,106)}m.textAlign='left';
+ var mx=((rot+180)%360+360)%360/360*550;m.fillStyle='rgba(255,214,10,.25)';m.fillStyle='rgba(255,214,10,.16)';m.fillRect(mx-550*14/360,0,550*28/360,155);m.fillStyle='#ffd60a';m.fillRect(mx-1,0,2,155);
+ if(tab==8)drawSeries();
+ if(now-(frame.s||0)>240){frame.s=now;tick()}
+ drawBeat(now);
+ requestAnimationFrame(frame)}
+/* Beating Earth, top left: a small globe that pulses on every beat of the music (stronger on the first beat of each bar). It turns with the main globe, glows in the layer colour, and keeps a slow 96 bpm pulse when paused. */
+var bc2=document.getElementById('beat'),bg=bc2.getContext('2d'),BN=96,bo=document.createElement('canvas'),bxo=bo.getContext('2d'),BPX=new Float32Array(BN*BN),BPY=new Float32Array(BN*BN),BPZ=new Float32Array(BN*BN),BL=new Float32Array(BN*BN),lastB=[0,.6],reduceM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches,BI;
+bo.width=bo.height=BN;BI=bxo.createImageData(BN,BN);
+(function(){var sl=[-.5,.5,.7],l=Math.hypot(sl[0],sl[1],sl[2]);sl=[sl[0]/l,sl[1]/l,sl[2]/l];for(var j=0;j<BN;j++)for(var i=0;i<BN;i++){var k=j*BN+i,x=(i+.5)/BN*2-1,y=1-(j+.5)/BN*2,q=x*x+y*y;if(q>1){BPZ[k]=-1;continue}var z=Math.sqrt(1-q);BPX[k]=x;BPY[k]=y;BPZ[k]=z;BL[k]=Math.max(0,x*sl[0]+y*sl[1]+z*sl[2])}})();
+function drawSeries(){var n=GT.length,lo=-.6,hi=1,X=function(i){return 8+i/(n-1)*534},Y=function(a){return 148-(a-lo)/(hi-lo)*130};m.fillStyle='#0b0b10';m.fillRect(0,0,550,155);m.strokeStyle='rgba(255,255,255,.18)';m.lineWidth=1;m.beginPath();m.moveTo(8,Y(0));m.lineTo(542,Y(0));m.stroke();m.strokeStyle='rgba(255,140,60,.9)';m.lineWidth=1.5;m.beginPath();for(var i=0;i<n;i++){i?m.lineTo(X(i),Y(GT[i])):m.moveTo(X(i),Y(GT[i]))}m.stroke();var ci=Math.min(n-1,W8.i);m.fillStyle='rgba(255,214,10,.16)';m.fillRect(8,0,X(ci)-8,155);m.fillStyle='#ffd60a';m.fillRect(X(ci)-1,0,2,155);m.beginPath();m.arc(X(ci),Y(GT[ci]),4,0,7);m.fill();m.font='700 15px Barlow,sans-serif';m.fillStyle='rgba(255,255,255,.9)';m.textAlign='left';m.fillText(String(1880+ci)+'  ·  1951–1980 = 0',14,20)}
+function drawBeat(now){
+ var dp=Math.min(2,window.devicePixelRatio||1),cs=bc2.clientWidth||84,cw=Math.round(cs*dp),ph,acc;
+ if(bc2.width!=cw){bc2.width=bc2.height=cw}
+ if(playing&&AC){var ct=AC.currentTime;while(BQ.length&&BQ[0][0]<=ct)lastB=BQ.shift();ph=Math.max(0,(ct-lastB[0])/(2*G));acc=lastB[1]}
+ else{BQ.length=0;ph=(now/1000*96/60)%1;acc=.4}
+ var e=(Math.exp(-ph*7)+.5*Math.exp(-Math.pow((ph-.3)*9,2)))*acc;if(reduceM)e*=.25;
+ var sc=1+.17*e,R=cw*.3,Rs=R*sc,c=cw/2,ct2=Math.cos(20*D),st2=Math.sin(20*D),d=BI.data;
+ for(var k=0;k<BN*BN;k++){var z=BPZ[k];if(z<0)continue;var y0=BPY[k]*ct2+z*st2,z0=z*ct2-BPY[k]*st2,la=Math.asin(Math.max(-1,Math.min(1,y0))),lo=Math.atan2(BPX[k],z0)*57.2958+rot,u=(((lo+180)/360)%1+1)%1,ui=(u*TW)|0,vi=((.5-la/Math.PI)*TH)|0;if(vi>=TH)vi=TH-1;var ti=(vi*TW+ui)*4,l=.3+1.15*BL[k]+.5*e*BL[k],rm=Math.pow(1-z,3),o=k*4;
+  d[o]=Math.min(255,TEX[ti]*l+rm*70);d[o+1]=Math.min(255,TEX[ti+1]*l+rm*130);d[o+2]=Math.min(255,TEX[ti+2]*l+rm*220);d[o+3]=255}
+ bxo.putImageData(BI,0,0);
+ bg.setTransform(1,0,0,1,0,0);bg.clearRect(0,0,cw,cw);
+ var cc=C[tab],gr=bg.createRadialGradient(c,c,Rs*.8,c,c,Rs*1.6);gr.addColorStop(0,'rgba('+cc+','+(.1+.3*e).toFixed(3)+')');gr.addColorStop(1,'rgba('+cc+',0)');bg.fillStyle=gr;bg.beginPath();bg.arc(c,c,Rs*1.6,0,7);bg.fill();
+ bg.imageSmoothingQuality='high';bg.drawImage(bo,c-Rs,c-Rs,2*Rs,2*Rs);
+ bg.lineWidth=Math.max(1,dp);bg.strokeStyle='rgba(190,215,255,.5)';bg.beginPath();bg.arc(c,c,Rs,0,7);bg.stroke();
+ var ra=.6*acc*Math.max(0,1-ph*1.4);if(ra>.01&&!reduceM){bg.strokeStyle='rgba('+cc+','+ra.toFixed(3)+')';bg.lineWidth=1.5*dp;bg.beginPath();bg.arc(c,c,R*(1.08+.5*Math.min(1,ph*1.4)),0,7);bg.stroke()}
+}
+requestAnimationFrame(frame);
+var TW=1024,TH=512,TEX=new Uint8ClampedArray(TW*TH*4),CL=new Uint8Array(512*256),LT=new Uint8Array(1024*512),CG=new Float32Array(256*128),GR=[];
+(function(){
+for(var i=0;i<4096;i++)GR.push(rnd());
+function sm(t){return t*t*(3-2*t)}
+function nz(x,y){var ix=Math.floor(x),iy=Math.floor(y),fx=sm(x-ix),fy=sm(y-iy),a=GR[((iy&63)<<6)+(ix&63)],b=GR[((iy&63)<<6)+((ix+1)&63)],c=GR[(((iy+1)&63)<<6)+(ix&63)],d=GR[(((iy+1)&63)<<6)+((ix+1)&63)];return a+(b-a)*fx+(c-a)*fy+(a-b-c+d)*fx*fy}
+function fb(x,y){return nz(x,y)*.5+nz(x*2,y*2)*.3+nz(x*4,y*4)*.2}
+function cl(v,a,b){return Math.max(0,Math.min(1,(v-a)/(b-a)))}
+var mc=document.createElement('canvas');mc.width=TW;mc.height=TH;var mx=mc.getContext('2d');mx.fillStyle='#000';mx.fillRect(0,0,TW,TH);mx.fillStyle='#fff';
+LAND.forEach(function(p){mx.beginPath();p.forEach(function(a,i){var X=(a[0]+180)/360*TW,Y=(90-a[1])/180*TH;i?mx.lineTo(X,Y):mx.moveTo(X,Y)});mx.closePath();mx.fill()});mx.fillRect(0,461,TW,51);
+var MD=mx.getImageData(0,0,TW,TH).data,bc=document.createElement('canvas');bc.width=TW;bc.height=TH;var bx=bc.getContext('2d');try{bx.filter='blur(7px)'}catch(er){}bx.drawImage(mc,0,0);var BD=bx.getImageData(0,0,TW,TH).data;
+for(var y=0;y<TH;y++)for(var x=0;x<TW;x++){
+var sx=((x+(fb(x/16,y/16)-.5)*18+TW)%TW)|0,sy=Math.max(0,Math.min(TH-1,(y+(fb(x/16+9,y/16+5)-.5)*18)|0)),land=MD[(sy*TW+sx)*4]>127,lat=90-(y+.5)/TH*180,lon=(x+.5)/TW*360-180,al=Math.abs(lat),e=fb(x/8+3,y/8+7),e2=nz(x/4,y/4),cr,cg,cb;
+if(land){if(al>72||(lat>58&&lon>-75&&lon<-12)){var k0=.9+.1*e2;cr=228*k0;cg=234*k0;cb=242*k0}
+else{var t=cl(al,12,37),u=cl(al,50,64),v=cl(al,62,72),des=Math.exp(-(al-24)*(al-24)/60)*(((lon>-20&&lon<65&&lat>0)||(lon>115&&lon<150&&lat<0))?1:.3);
+cr=38+48*t;cg=84+26*t;cb=40+16*t;cr+=(46-cr)*u;cg+=(70-cg)*u;cb+=(52-cb)*u;cr+=(125-cr)*v;cg+=(128-cg)*v;cb+=(110-cb)*v;cr+=(178-cr)*des;cg+=(150-cg)*des;cb+=(96-cb)*des;var kk=.65+.8*e;cr*=kk;cg*=kk;cb*=kk}}
+else{var sh=Math.pow(BD[(y*TW+x)*4]/255,.6),ice=cl(al,74,80)*(.6+.4*e2),nn=(e-.5)*14;cr=6+sh*20+nn*.3;cg=28+sh*66+nn*.6;cb=66+sh*72+nn;cr+=(225-cr)*ice;cg+=(235-cg)*ice;cb+=(245-cb)*ice}
+var o=(y*TW+x)*4;TEX[o]=cr;TEX[o+1]=cg;TEX[o+2]=cb;TEX[o+3]=land?255:0}
+for(var y=0;y<256;y++)for(var x=0;x<512;x++)CL[y*512+x]=cl(fb(x/8,y/8+2),.46,.62)*255;
+var CT=[[0,51.5,1],[2.3,48.9,1],[-3.7,40.4,.8],[2.2,41.4,.7],[-9.1,38.7,.6],[12.5,41.9,.8],[9.2,45.5,.9],[13.4,52.5,.8],[7,51.4,1],[4.9,52.4,.9],[4.4,50.8,.8],[16.4,48.2,.6],[21,52.2,.7],[14.4,50.1,.5],[19,47.5,.6],[23.7,38,.6],[29,41,1],[32.9,39.9,.6],[37.6,55.8,1],[30.3,59.9,.7],[30.5,50.4,.6],[26.1,44.4,.5],[31.2,30,1.2],[29.9,31.2,.6],[34.8,32.1,.8],[46.7,24.7,.8],[51.4,35.7,.9],[44.4,33.3,.7],[55.3,25.2,.8],[3.4,6.5,.9],[3,36.8,.5],[-7.6,33.6,.5],[28,-26.2,.8],[36.8,-1.3,.5],[77.2,28.6,1],[72.9,19,1],[88.4,22.6,.9],[90.4,23.8,1],[67,24.9,.8],[74.3,31.5,.8],[100.5,13.8,.8],[106.8,-6.2,.9],[121,14.6,.8],[116.4,39.9,1],[121.5,31.2,1],[113.3,23.1,1],[127,37.5,1],[139.7,35.7,1.2],[135.5,34.7,.9],[151.2,-33.9,.6],[-74,40.7,1.2],[-77,39,.8],[-87.6,41.9,.9],[-118.2,34,1],[-122.4,37.8,.6],[-97,32.8,.6],[-95.4,29.8,.6],[-84.4,33.7,.6],[-80.2,25.8,.6],[-99.1,19.4,1],[-46.6,-23.5,1],[-43.2,-22.9,.8],[-58.4,-34.6,.8],[-74,4.7,.6],[-77,-12,.6]];
+for(var ni=0;ni<14;ni++)CT.push([ni<4?31.2:ni<8?31.5:32.4,30-ni*.6,.55,.45]);
+CT.push([10,48,.5,14],[-80,38,.35,9],[78,23,.35,9],[113,32,.4,9]);
+var DG=new Float32Array(256*128);
+for(var gy=0;gy<128;gy++)for(var gx=0;gx<256;gx++){var glo=(gx+.5)/256*360-180,gla=90-(gy+.5)/128*180,gcs=Math.cos(gla*D),gs2=0;for(var ci=0;ci<CT.length;ci++){var cc=CT[ci],gdx=Math.abs(glo-cc[0]);if(gdx>180)gdx=360-gdx;gdx*=gcs;var gdy=gla-cc[1],gsg=cc[3]||1.6;gs2+=cc[2]*Math.exp(-(gdx*gdx+gdy*gdy)/(2*gsg*gsg))}DG[gy*256+gx]=gs2;CG[gy*256+gx]=chg(glo,gla)}
+function isL(x,y){return TEX[((y<0?0:y>=TH?TH-1:y)*TW+((x+TW)%TW))*4+3]>0}
+for(var y=0;y<TH;y++)for(var x=0;x<TW;x++){if(!isL(x,y))continue;var la3=90-(y+.5)/TH*180,lo3=(x+.5)/TW*360-180;if(la3>72||la3<-60||(lo3>-75&&lo3<-12&&la3>58))continue;var cst=(isL(x-3,y)&&isL(x+3,y)&&isL(x,y-3)&&isL(x,y+3))?0:1,pop=Math.min(1.5,DG[(y>>2)*256+(x>>2)])+.07,hh=((x*73856093)^(y*19349663))>>>0;hh=((hh^(hh>>>13))*1274126177)>>>0;var h=(hh&65535)/65535;LT[y*TW+x]=Math.min(255,pop*(.1+1.3*h*h*h)*(1+.8*cst)*230)}
+})();
+var RES=0,gc=document.createElement('canvas'),gx=gc.getContext('2d'),ID,PX,PY,PZ,LM,SP,RM;
+function prep(n){RES=n;gc.width=gc.height=n;ID=gx.createImageData(n,n);var N=n*n;PX=new Float32Array(N);PY=new Float32Array(N);PZ=new Float32Array(N);LM=new Float32Array(N);SP=new Float32Array(N);RM=new Float32Array(N);
+var s=[-.55,.35,.76],sl=Math.hypot(s[0],s[1],s[2]);s=[s[0]/sl,s[1]/sl,s[2]/sl];var h=[s[0],s[1],s[2]+1],hl=Math.hypot(h[0],h[1],h[2]);h=[h[0]/hl,h[1]/hl,h[2]/hl];
+for(var j=0;j<n;j++)for(var i=0;i<n;i++){var k=j*n+i,x=(i+.5)/n*2-1,y=1-(j+.5)/n*2,q=x*x+y*y;if(q>1){PZ[k]=-1;continue}var z=Math.sqrt(1-q);PX[k]=x;PY[k]=y;PZ[k]=z;LM[k]=Math.pow(Math.max(0,x*s[0]+y*s[1]+z*s[2]),.8);SP[k]=Math.pow(Math.max(0,x*h[0]+y*h[1]+z*h[2]),60);RM[k]=Math.pow(1-z,3)}}
+function drawGlobe(cx,cy,R){var n=Math.round(Math.min(tab==1?560:420,2*R)/40)*40;n=Math.max(160,n);if(n!=RES)prep(n);
+var gr=g.createRadialGradient(cx,cy,R*.96,cx,cy,R*1.14);gr.addColorStop(0,'rgba(120,150,255,'+.18+')');gr.addColorStop(1,'rgba(120,170,255,0)');g.fillStyle=gr;g.beginPath();g.arc(cx,cy,R*1.14,0,7);g.fill();
+var d=ID.data,ct=Math.cos(tilt*D),st=Math.sin(tilt*D),amb=.05,cs=((performance.now()*.003)|0),N=RES*RES,fy=Math.max(0,(year-2012)/11);
+for(var k=0;k<N;k++){var z=PZ[k];if(z<0)continue;var y0=PY[k]*ct+z*st,z0=z*ct-PY[k]*st,la=Math.asin(Math.max(-1,Math.min(1,y0))),lo=Math.atan2(PX[k],z0)*57.2958+rot,u=(((lo+180)/360)%1+1)%1,ui=(u*TW)|0,vi=((.5-la/Math.PI)*TH)|0;if(vi>=TH)vi=TH-1;var ti=(vi*TW+ui)*4,c=0,l=amb+.12*LM[k],sp=TEX[ti+3]>0?0:SP[k]*.1*255,rm=RM[k]*(.25+LM[k]),o=k*4,lf=TEX[ti+3]>0?1:0,lv=tab==1?LT[vi*TW+ui]/255:0,ch=lv>0?CG[(vi>>2)*256+(ui>>2)]:0,lv2=lv*Math.max(0,1+1.2*ch*fy),rd=ch<-.25?Math.min(1,(-ch-.25)*2*fy):0,gw=ch>.25?Math.min(1,(ch-.25)*2*fy):0,wt=1-gw-rd,lr=255*wt+176*gw+255*rd,lg=244*wt+112*gw+128*rd,lb=225*wt+255*gw+32*rd,iv=lv2>0?Math.pow(Math.min(1,lv2),1.3)*1.15*(.35+.65*z):0;
+d[o]=(TEX[ti]*(1-c)+235*c)*l+sp+rm*70+lf*16+lr*iv;d[o+1]=(TEX[ti+1]*(1-c)+238*c)*l+sp+rm*130+lf*10+lg*iv;d[o+2]=(TEX[ti+2]*(1-c)+245*c)*l+sp+rm*220+lf*26+lb*iv;d[o+3]=255}
+gx.putImageData(ID,0,0);g.drawImage(gc,cx-R,cy-R,2*R,2*R);
+if(tab==1){var B=drawGlobe.B=drawGlobe.B||{a:document.createElement('canvas'),b:document.createElement('canvas')},q1=RES>>2,q2=Math.max(8,(RES/10)|0);if(B.a.width!=q1){B.a.width=B.a.height=q1;B.b.width=B.b.height=q2}var xa=B.a.getContext('2d'),xb=B.b.getContext('2d');xa.clearRect(0,0,q1,q1);xb.clearRect(0,0,q2,q2);xa.drawImage(gc,0,0,q1,q1);xb.drawImage(gc,0,0,q2,q2);g.save();g.globalCompositeOperation='lighter';g.globalAlpha=.8;g.drawImage(B.a,cx-R,cy-R,2*R,2*R);g.globalAlpha=.6;g.drawImage(B.b,cx-R,cy-R,2*R,2*R);g.restore()}}
+var LAB=[['Lightning','flash rate · 2017–23'],['Night lights','change since 2012'],['Ocean','sea surface temperature'],['Currents','current flow'],['Aerosols','aerosol load'],['CO₂','concentration'],['Forests','canopy height'],['Moisture','moisture transport'],['Warming','global temperature anomaly']],PER=['2017–2023','2012–2023','annual mean','2021–2023','19 Aug 2025','Jan–Mar 2020','2019–2020','Nov–Dec 2021','1880–2015'],SRC=['STYLED AFTER NASA SVS 5011 · ISS LIGHTNING 2017–2023','STYLED AFTER NASA SVS 5313 · NIGHT LIGHTS 2012–2023','STYLED AFTER NASA SVS 3912 · SEA SURFACE TEMPERATURE','STYLED AFTER NASA SVS 3912 + 5425 · OCEAN CURRENTS','STYLED AFTER NASA SVS 5669 · GEOS AEROSOLS','STYLED AFTER NASA SVS 5196 · CO₂, JAN–MAR 2020','STYLED AFTER NASA SVS 4950 · GEDI FOREST HEIGHT','STYLED AFTER NASA SVS 4960 · ATMOSPHERIC RIVER','NASA GISS · GISTEMP TEMPERATURE 1880–2015'],PN=document.createElement('div'),ROWS=[],lastLive=0;
+PN.id='panel';PN.innerHTML='<h2></h2><p></p><div></div><p></p>';document.body.appendChild(PN);
+var pt=PN.children[0],ps=PN.children[1],pb=PN.children[2],pm=PN.children[3];
+RINGS.slice().reverse().forEach(function(la){var r=document.createElement('div');r.className='pr';r.innerHTML='<span>'+Math.abs(la)+(la<0?'S':'N')+'</span><i><b></b><u></u></i>';pb.appendChild(r);ROWS[RINGS.indexOf(la)]={b:r.querySelector('b'),u:r.querySelector('u')}});
+/* one data pass per ring: the panel, the audio and the live text all read this */
+function RD(){var S=SET[tab],out=[];RINGS.forEach(function(la,i){var up=0,dn=0,v=0;for(var k=0;k<S.length;k++){var d=S[k];if(!vis(d))continue;var dl=Math.abs(((d[0]-rot+540)%360)-180);if(dl<14&&Math.abs(d[1]-la)<5){var ch=wy(d)-d[2];if(ch>0)up+=ch;else dn-=ch;v+=wy(d)}}out.push({la:la,i:i,up:Math.min(1,up*(tab==1?.35:K[tab])),dn:Math.min(1,dn*(tab==1?.35:K[tab])),v:Math.min(1,v*(tab==1?.5:K[tab]))})});return out}
+function sound(rd){rd.forEach(function(r){if(tab==0){if(r.v>.1)for(var k=0;k<Math.round(r.v*3);k++)setTimeout(click,k*45+Math.random()*60)}else if(tab==1){if(r.up>.08)note2(r.i,r.up,1);if(r.dn>.08)note2(r.i,r.dn,-1)}else if(r.v>.1)note(r.i,r.v)})}
+function tick(force){var rd=RD(),t=tab,up=0,dn=0,bi=0,best=-1;
+rd.forEach(function(r){var R_=ROWS[r.i];R_.b.style.width=(t==1?r.up*50:r.v*100)+'%';R_.b.style.background='rgb('+(t==1?'255,244,225':C[t])+')';R_.u.style.width=(t==1?r.dn*50:0)+'%';up+=r.up;dn+=r.dn;var m=t==1?Math.max(r.up,r.dn):r.v;if(m>best){best=m;bi=r.i}});
+pt.textContent=LAB[t][0];ps.textContent=LAB[t][1]+(t==1?' · '+Math.floor(year)+' vs 2012':'');
+var sm=t==1?'Brighter '+Math.round(up/rd.length*100)+'% · dimmer '+Math.round(dn/rd.length*100)+'%':'Peak '+Math.abs(RINGS[bi])+(RINGS[bi]<0?'°S':'°N')+' · '+Math.round(best*100)+'%';
+pm.textContent='Facing '+Math.abs(Math.round(rot))+'° '+(rot<0?'W':'E')+' · '+sm;
+var yi=document.getElementById('yrIn');document.getElementById('yr').textContent=Math.floor(year);yi.value=Math.floor(year);yi.disabled=!(t==1||t==5);document.querySelector('.time').style.opacity=(t==1||t==5)?1:.35;
+var nw=Date.now();if(force||(playing&&nw-lastLive>2500)){lastLive=nw;document.getElementById('live').textContent=LAB[t][0]+'. '+pm.textContent}
+if(playing)sound(rd)}
+function ensure(){if(AC)return;AC=new (window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=.5;master.connect(AC.destination)}
+function click(){var b=AC.createBuffer(1,2205,AC.sampleRate),d=b.getChannelData(0);for(var i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/300);var s=AC.createBufferSource(),f=AC.createBiquadFilter();s.buffer=b;f.type="highpass";f.frequency.value=800+Math.random()*2000;s.connect(f);f.connect(master);s.start()}
+function note(i,v){var c=VO[tab],o=AC.createOscillator(),e=AC.createGain(),f=AC.createBiquadFilter(),t=AC.currentTime,fr=196*c[1]*Math.pow(2,PENT[i]/12);o.type=c[0];o.frequency.setValueAtTime(fr,t);o.frequency.exponentialRampToValueAtTime(fr*c[3],t+c[2]);f.type="lowpass";f.frequency.value=(c[0]=="sine"||c[0]=="triangle")?8000:700;e.gain.setValueAtTime(.05+(c[0]=="square"?.12:.3)*v,t);e.gain.exponentialRampToValueAtTime(.001,t+c[2]);o.connect(f);f.connect(e);e.connect(master);o.start();o.stop(t+c[2]+.05)}
+function spr(c){var s=document.createElement('canvas');s.width=s.height=64;var x=s.getContext('2d'),gr=x.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba('+c+',1)');gr.addColorStop(.18,'rgba('+c+',.55)');gr.addColorStop(.5,'rgba('+c+',.12)');gr.addColorStop(1,'rgba('+c+',0)');x.fillStyle=gr;x.fillRect(0,0,64,64);return s}
+var SW=spr('176,112,255'),SO=spr('255,244,225'),SR=spr('255,128,32');
+function note2(i,v,dr){var o=AC.createOscillator(),e=AC.createGain(),t=AC.currentTime,fr=196*(dr>0?2:.5)*Math.pow(2,PENT[i]/12),du=dr>0?.5:1.1;o.type=dr>0?'triangle':'sine';o.frequency.setValueAtTime(fr,t);o.frequency.exponentialRampToValueAtTime(fr*(dr>0?1.25:.7),t+du);e.gain.setValueAtTime(.04+.28*v,t);e.gain.exponentialRampToValueAtTime(.001,t+du);o.connect(e);e.connect(master);o.start();o.stop(t+du+.05)}
+function chgBeat(){var best=0,bi=0,dir=0,S=SET[1];RINGS.forEach(function(la,i){var up=0,dn=0;for(var k=0;k<S.length;k++){var d=S[k],dl=Math.abs(((d[0]-rot+540)%360)-180);if(dl<14&&Math.abs(d[1]-la)<5){var ch=wy(d)-d[2];if(ch>0)up+=ch;else dn-=ch}}up=Math.min(1,up*.35);dn=Math.min(1,dn*.35);if(up>.08)note2(i,up,1);if(dn>.08)note2(i,dn,-1);if(Math.max(up,dn)>best){best=Math.max(up,dn);bi=i;dir=up>=dn?1:-1}});document.getElementById('live').textContent='Night lights since 2012, year '+Math.floor(year)+', facing '+Math.abs(Math.round(rot))+(rot<0?' west':' east')+', '+(dir>0?'brighter':'dimmer')+' '+Math.round(best*100)+' percent.'}
+/* tuned music: D natural minor, 96 bpm, Dm - Bb - F - C, notes snapped to a fixed grid */
+var G=60/96/2,nT=0,stp=0,sch=null,lastRD=[],BUS=null,NB=null,CHP=[[0,[0,3,7]],[8,[0,4,7]],[3,[0,4,7]],[10,[0,4,7]]],SCL=[0,2,3,5,7,8,10];
+function fq(s){return 146.83*Math.pow(2,s/12)}
+function ringFreq(i,oct){return fq(SCL[i%7]+12*Math.floor(i/7))*oct}
+function bus(){if(BUS)return BUS;var comp=AC.createDynamicsCompressor();master.disconnect();master.connect(comp);comp.connect(AC.destination);BUS=AC.createGain();BUS.gain.value=.9;BUS.connect(master);var n=(AC.sampleRate*2.2)|0,ir=AC.createBuffer(2,n,AC.sampleRate);for(var c=0;c<2;c++){var dd=ir.getChannelData(c);for(var i=0;i<n;i++)dd[i]=(Math.random()*2-1)*Math.pow(1-i/n,2.5)}var cv=AC.createConvolver();cv.buffer=ir;var wg=AC.createGain();wg.gain.value=.35;BUS.connect(cv);cv.connect(wg);wg.connect(master);return BUS}
+function tone(f,t,dur,g,type,lp,at){at=at||.015;var o=AC.createOscillator(),e=AC.createGain(),fl=AC.createBiquadFilter();o.type=type;o.frequency.value=f;fl.type='lowpass';fl.frequency.value=lp||3000;e.gain.setValueAtTime(.0001,t);e.gain.linearRampToValueAtTime(g,t+at);e.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(fl);fl.connect(e);e.connect(bus());o.start(t);o.stop(t+dur+.05)}
+function hat(t,g){if(!NB){var L=2205;NB=AC.createBuffer(1,L,AC.sampleRate);var d=NB.getChannelData(0);for(var i=0;i<L;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/260)}var s=AC.createBufferSource(),f=AC.createBiquadFilter(),e=AC.createGain();s.buffer=NB;f.type='highpass';f.frequency.value=5000;e.gain.value=g;s.connect(f);f.connect(e);e.connect(bus());s.start(t)}
+/* NASA GISS GISTEMP: global annual land-ocean temperature anomaly in deg C vs 1951-1980, 1880 to 2015 (136 values) */
+var GT=[-0.20,-0.11,-0.09,-0.20,-0.27,-0.31,-0.30,-0.32,-0.19,-0.11,-0.36,-0.24,-0.26,-0.29,-0.30,-0.21,-0.14,-0.11,-0.28,-0.16,-0.09,-0.14,-0.28,-0.36,-0.44,-0.28,-0.22,-0.40,-0.43,-0.47,-0.43,-0.45,-0.35,-0.34,-0.16,-0.10,-0.33,-0.40,-0.25,-0.22,-0.26,-0.21,-0.27,-0.24,-0.28,-0.20,-0.09,-0.20,-0.21,-0.36,-0.14,-0.09,-0.17,-0.28,-0.14,-0.19,-0.15,-0.02,-0.03,-0.03,0.08,0.12,0.10,0.14,0.26,0.12,-0.03,-0.04,-0.09,-0.09,-0.18,-0.07,0.01,0.08,-0.12,-0.14,-0.19,0.04,0.06,0.03,-0.03,0.05,0.02,0.06,-0.21,-0.10,-0.05,-0.02,-0.07,0.06,0.03,-0.09,0.01,0.15,-0.08,-0.01,-0.11,0.18,0.07,0.17,0.27,0.33,0.13,0.31,0.16,0.12,0.19,0.33,0.40,0.29,0.43,0.42,0.23,0.24,0.31,0.45,0.34,0.47,0.63,0.41,0.42,0.54,0.62,0.61,0.54,0.68,0.63,0.65,0.53,0.64,0.71,0.59,0.62,0.65,0.74,0.86],W8={i:0},BQ=[];
+function playStep(t,s){if(s%2==0)BQ.push([t,s%8==0?1:.6]);var rd=lastRD,ch=CHP[Math.floor(s/8)%4],b8=s%8;
+if(b8==0)ch[1].forEach(function(x){tone(fq(ch[0]+x),t,2.6,.05,'triangle',1200,.5)});
+if(b8%4==0)tone(fq(ch[0]-12),t,1.1,.16,'sine',400);
+if(tab!=1)rd.forEach(function(r){if(r.up>.08&&(s+r.i)%4==0)tone(ringFreq(r.i,2),t,.5,.04+.16*r.up,'triangle',4000);if(r.dn>.08&&(s+r.i)%4==2)tone(ringFreq(r.i,.5),t,1,.05+.2*r.dn,'sine',900)});
+if(tab==0){var bs=null;rd.forEach(function(r){if(r.v>.1&&Math.random()<r.v)hat(t+(Math.random()<.5?0:G/2),.1*r.v);if(!bs||r.v>bs.v)bs=r});if(bs&&bs.v>.15&&b8%4==0)tone(ringFreq(bs.i,2),t,.25,.1,'square',2500)}
+else if(tab==1){rd.forEach(function(r){if(r.up>.08&&(s+r.i)%4==0)tone(ringFreq(r.i,2),t,.7,.05+.2*r.up,'triangle',4000);if(r.dn>.08&&(s+r.i)%4==2)tone(ringFreq(r.i,.5),t,1.2,.06+.25*r.dn,'sine',900)})}
+else if(tab==8){var gi=W8.i=(W8.i+1)%GT.length,a=GT[gi],sm=0,c5=0,pn=function(x){return Math.max(0,Math.min(14,Math.round((x+.5)/1.4*14)))};for(var q=-2;q<=2;q++){var jj=gi+q;if(jj>=0&&jj<GT.length){sm+=GT[jj];c5++}}sm/=c5;tone(ringFreq(pn(a),1),t,.5,.15,'triangle',3500);if(gi%4==0)tone(ringFreq(pn(sm),.5),t,1.1,.12,'sine',900);if(a>.3&&gi%2==0)tone(ringFreq(pn(a)+7,1),t,.3,.04,'sine',5000)}
+else{var b=null;rd.forEach(function(r){if(!b||r.v>b.v)b=r});if(b&&b.v>.1&&(b8%2==0||b.v>.6)){var c=VO[tab],sn=c[0]=='sine'||c[0]=='triangle';tone(ringFreq(b.i,Math.max(c[1],.5))*(tab==5?1+.06*lvl():1),t,Math.max(.3,c[2]),.05+.22*b.v,c[0],sn?5000:900)}}}
+function startSched(){if(sch||!AC)return;bus();nT=AC.currentTime+.1;sch=setInterval(function(){if(!playing)return;if(nT<AC.currentTime)nT=AC.currentTime+.05;while(nT<AC.currentTime+.15){playStep(nT,stp++);nT+=G}},30)}
+function sound(rd){lastRD=rd;startSched()}
+/* panel wording and one tick for every layer: bars show growth (layer color) and decline (red) per band */
+var UPW=['more flashes','brighter','warmer','stronger','more aerosol','higher','taller','wetter','warmer'],DNW=['fewer','dimmer','cooler','weaker','less aerosol','lower','shorter','drier','cooler'];
+LAB.forEach(function(l,i){l[2]=UPW[i];l[3]=DNW[i]});
+function tick(force){var rd=RD(),t=tab,up=0,dn=0,bi=0,best=-1;
+rd.forEach(function(r){var R_=ROWS[r.i];R_.b.style.width=(t==1?r.up*50:r.v*100)+'%';R_.b.style.background='rgb('+(t==1?'176,112,255':C[t])+')';R_.u.style.width=(t==1?r.dn*50:0)+'%';up+=r.up;dn+=r.dn;var m=t==1?Math.max(r.up,r.dn):r.v;if(m>best){best=m;bi=r.i}});
+var L=LAB[t];pt.textContent=L[0];ps.textContent=L[1]+(t==1?' · '+Math.floor(year)+' vs 2012':t==5?' · '+Math.floor(year)+' · '+ppm().toFixed(1)+' ppm':'');
+pm.textContent='Facing '+Math.abs(Math.round(rot))+'° '+(rot<0?'W':'E')+' · '+(t==1?L[2]+' '+Math.round(up/rd.length*100)+'% · '+L[3]+' '+Math.round(dn/rd.length*100)+'%':(best<.05?'No signal here':'Peak '+Math.abs(RINGS[bi])+(RINGS[bi]<0?'°S':'°N')+' · '+Math.round(best*100)+'%'));
+var yi=document.getElementById('yrIn');document.getElementById('yr').textContent=Math.floor(year);yi.value=Math.floor(year);yi.disabled=!(t==1||t==5);document.querySelector('.time').style.opacity=(t==1||t==5)?1:.35;document.querySelector('.src small').textContent=SRC[t];
+if(t==8){var gy=1880+W8.i,ga=GT[W8.i];document.getElementById('yr').textContent=gy;pm.textContent=gy+' · '+(ga>=0?'+':'')+ga.toFixed(2)+'°C vs 1951–80';document.querySelector('.time').style.opacity=1}
+var nw=Date.now();if(force||(playing&&nw-lastLive>2500)){lastLive=nw;document.getElementById('live').textContent=L[0]+'. '+pm.textContent}
+if(playing)sound(rd)}
+function beat(){if(tab==1){chgBeat();return}var best=0,bi=0,txt="";RINGS.forEach(function(la,i){var v=val(la);if(v>best){best=v;bi=i}if(v>.1){if(tab==0){for(var k=0;k<Math.round(v*3);k++)setTimeout(click,k*45+Math.random()*60)}else note(i,v)}});
+ document.getElementById("live").textContent=["Lightning","Night lights","Ocean","Currents","Aerosols","Carbon dioxide","Forest height","Atmospheric rivers"][tab]+", facing "+Math.abs(Math.round(rot))+(rot<0?" west":" east")+", strongest at "+Math.abs(RINGS[bi])+(RINGS[bi]<0?" south":" north")+", "+Math.round(best*100)+" percent."}
+var drag=false,lx=0,ly=0;
+cv.addEventListener("pointerdown",function(e){drag=true;lx=e.clientX;ly=e.clientY;cv.setPointerCapture(e.pointerId);cv.style.cursor="grabbing"});
+cv.addEventListener("pointermove",function(e){if(!drag)return;rot=((rot-(e.clientX-lx)*.4+180+360)%360)-180;tilt=Math.max(-10,Math.min(50,tilt+(e.clientY-ly)*.2));lx=e.clientX;ly=e.clientY});
+cv.addEventListener("pointerup",function(){drag=false;cv.style.cursor="grab"});
+cv.addEventListener("keydown",function(e){var k={ArrowRight:8,ArrowLeft:-8,PageUp:30,PageDown:-30}[e.key];if(k){e.preventDefault();rot=((rot+k+180+360)%360)-180}});
+var tabs=document.querySelectorAll("[data-t]");
+tabs.forEach(function(b){b.onclick=function(){tab=+b.dataset.t;if(tab==8)W8.i=0;tabs.forEach(function(x){x.setAttribute("aria-selected",x==b)});tick(true)}});
+document.getElementById("play").onclick=function(){ensure();if(AC.state=="suspended")AC.resume();playing=!playing;this.textContent=playing?"Pause":"Play";this.setAttribute("aria-pressed",playing);tick(true)};
+var note_=document.getElementById("note");
+function say(t){note_.textContent=t;setTimeout(function(){if(note_.textContent===t)note_.textContent=""},4000)}
+var rec=null,SECS=30,SLUG=["lightning","night-lights","ocean","currents","aerosols","co2","forests","moisture"];
+/* Export: records what you hear for 30 seconds (press again to stop early) and downloads it as an audio file */
+document.getElementById("exp").onclick=function(){var btn=this;
+if(rec){rec.stop();return}
+if(!window.MediaRecorder){say("Export isn’t supported in this browser.");return}
+ensure();if(AC.state=="suspended")AC.resume();bus();
+var dest=AC.createMediaStreamDestination();master.connect(dest);
+var types=["audio/webm;codecs=opus","audio/ogg;codecs=opus","audio/mp4"],mt="";for(var i=0;i<types.length;i++)if(MediaRecorder.isTypeSupported(types[i])){mt=types[i];break}
+var chunks=[],r,left=SECS,name=SLUG[tab],started=false;
+try{r=mt?new MediaRecorder(dest.stream,{mimeType:mt}):new MediaRecorder(dest.stream)}catch(er){try{master.disconnect(dest)}catch(e2){}say("Export could not start.");return}
+if(!playing){started=true;document.getElementById("play").onclick()}
+r.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data)};
+function show(){btn.textContent="Stop · "+left+"s"}
+var tm=setInterval(function(){left--;if(left<=0)r.stop();else show()},1000);
+r.onstop=function(){clearInterval(tm);try{master.disconnect(dest)}catch(e){}rec=null;btn.textContent="Export Audio";
+if(started&&playing)document.getElementById("play").onclick();
+var ty=r.mimeType||mt||"audio/webm",b=new Blob(chunks,{type:ty}),ext=/mp4/.test(ty)?"m4a":/ogg/.test(ty)?"ogg":"webm",a=document.createElement("a");
+a.href=URL.createObjectURL(b);a.download="earth-beat-"+name+"."+ext;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1000);say("Saved "+a.download)};
+rec=r;r.start();show();say("Recording "+SECS+" seconds of "+LAB[tab][0]+". Press again to stop early.")};
+
+var dlg=document.getElementById("dlg");document.getElementById("info").onclick=function(){dlg.showModal()};document.getElementById("close").onclick=function(){dlg.close()};
+document.getElementById("yrIn").oninput=function(){year=+this.value;tick(true)};
+})();
+</script>
+</body>
+</html>
